@@ -29,7 +29,7 @@ spec:
           sh 'mvn -version'
         }
         container('busybox') {
-          sh 'echo busybox'
+          sh 'echo $PWD; find'
         }
       }
     }
