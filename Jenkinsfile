@@ -1,69 +1,35 @@
 pipeline {
   agent {
     kubernetes {
-      label 'spring-petclinic-demo'
-      defaultContainer 'jnlp'
       yaml """
 apiVersion: v1
 kind: Pod
 metadata:
-labels:
-  component: ci
+  labels:
+    some-label: some-label-value
 spec:
-  # Use service account that can deploy to all namespaces
-  serviceAccountName: cd-jenkins
   containers:
   - name: maven
-    image: maven:latest
+    image: maven:alpine
     command:
     - cat
     tty: true
-    volumeMounts:
-      - mountPath: "/root/.m2"
-        name: m2
-  - name: docker
-    image: docker:latest
+  - name: busybox
+    image: busybox
     command:
     - cat
     tty: true
-    volumeMounts:
-    - mountPath: /var/run/docker.sock
-      name: docker-sock
-  volumes:
-    - name: docker-sock
-      hostPath:
-        path: /var/run/docker.sock
-    - name: m2
-      persistentVolumeClaim:
-        claimName: m2
 """
-}
-   }
+    }
+  }
   stages {
-    stage('Build') {
+    stage('Run maven') {
       steps {
         container('maven') {
-          sh """
-                        mvn package -DskipTests
-                                                """
+          sh 'mvn -version'
         }
-      }
-    }
-    stage('Test') {
-      steps {
-        container('maven') {
-          sh """
-             mvn test
-          """
-        }
-      }
-    }
-    stage('Push') {
-      steps {
-        container('docker') {
-          sh """
-             docker build -t spring-petclinic-demo:$BUILD_NUMBER .
-          """
+        container('busybox') {
+          sh '/bin/busybox'
         }
       }
     }
